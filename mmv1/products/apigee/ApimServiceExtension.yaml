@@ -1,0 +1,168 @@
+# Copyright 2025 Google Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+name: 'ApimServiceExtension'
+description: |
+  Apigee APIM Service Extension.
+references:
+  guides:
+    'Creating a ApimServiceExtension': 'https://cloud.google.com/apigee/docs/api-platform/get-started/create-apim-service-extension'
+  api: 'https://cloud.google.com/apigee/docs/reference/apis/apigee/rest/v1/organizations.apimServiceExtensions/create'
+docs:
+base_url: '{{org_id}}/apimServiceExtensions'
+self_link: '{{org_id}}/apimServiceExtensions/{{apim_service_extension_id}}'
+create_url: '{{org_id}}/apimServiceExtensions?apimServiceExtensionId={{apim_service_extension_id}}'
+delete_url: '{{org_id}}/apimServiceExtensions/{{apim_service_extension_id}}'
+update_verb: 'PATCH'
+update_mask: true
+import_format:
+  - '{{org_id}}/apimServiceExtensions/{{apim_service_extension_id}}'
+  - '{{org_id}}/{{apim_service_extension_id}}'
+timeouts:
+  insert_minutes: 30
+  update_minutes: 20
+  delete_minutes: 30
+autogen_async: true
+async:
+  actions: ['create', 'delete', 'update']
+  type: 'OpAsync'
+  operation:
+    base_url: '{{op_id}}'
+  result:
+    resource_inside_response: true
+custom_code:
+  custom_import: 'templates/terraform/custom_import/apigee_apim_service_extension.go.tmpl'
+examples:
+  - name: 'apigee_apim_service_extension_basic'
+    exclude_test: true
+  - name: 'apigee_apim_service_extension_basic_test'
+    primary_resource_id: 'apigee_apim_service_extension'
+    test_env_vars:
+      org_id: 'ORG_ID'
+      billing_account: 'BILLING_ACCT'
+    exclude_docs: true
+    skip_vcr: true
+    external_providers: ["time"]
+exclude_sweeper: true
+parameters:
+  - name: "orgId"
+    type: String
+    description: |
+      The Apigee Organization associated with the APIM Service Extension
+      in the format `organizations/{{org_name}}`.
+    url_param_only: true
+    required: true
+    immutable: true
+  - name: 'apimServiceExtensionId'
+    type: String
+    description: |
+      ID of the apim service extension
+    url_param_only: true
+    required: true
+    immutable: true
+properties:
+  - name: 'name'
+    type: String
+    description: |
+      Unique name of the APIM service extension
+      The name must conform with RFC-1034, is restricted to lower-cased
+      letters, numbers and hyphens, and can have a maximum length of 63
+      characters.
+    output: true
+  - name: 'lbForwardingRule'
+    type: String
+    description: |
+      Name of the Google Cloud LB forwarding rule in the following format:
+      projects/{project}/regions/{region}/forwardingRules/{forwarding_rule}
+      projects/{project}/global/forwardingRules/{forwarding_rule}
+    required: true
+    immutable: true
+  - name: 'extensionProcessor'
+    type: String
+    description: |
+      Name of the proxy deployed in the Apigee X instance.
+    required: true
+  - name: 'network'
+    type: String
+    description: |
+      The network for the LB forwarding rule in the following format:
+      projects/{project}/global/networks/{network}
+    required: true
+    immutable: true
+  - name: 'networkConfigs'
+    type: Array
+    description: |
+      List of Network configurations.
+      At least one newtwork configuration is required.
+    required: true
+    item_type:
+      type: NestedObject
+      properties:
+      - name: 'region'
+        type: String
+        description: The region for the PSC NEG.
+        required: true
+      - name: 'subnet'
+        type: String
+        description: |
+          The subnet for the PSC NEG in the following format: 
+          projects/{project}/regions/{region}/subnetworks/{subnet}
+  - name: 'extensions'
+    type: Array
+    description: Apigee service extensions.
+    required: true
+    item_type:
+      type: NestedObject
+      properties:
+      - name: 'name'
+        type: String
+        description: |
+          Name of for this extension.
+          The name must conform with RFC-1034, is restricted to lower-cased
+          letters, numbers and hyphens, and can have a maximum length of 63
+          characters.
+        required: true
+      - name: 'matchCondition'
+        type: String
+        description: |
+          A Common Expression Language (CEL) expression that is used to match requests for which the extension is executed.
+          Refer to https://cloud.google.com/service-extensions/docs/cel-matcher-language-reference
+          for more details.
+        required: true
+      - name: 'failOpen'
+        type: Boolean
+        description: |
+          Whether this request should fail open.
+      - name: 'hostname'
+        type: String
+        description: |
+          One of the hostnames of Apigee EnvGroup where the proxy is deployed.
+          This hostname (i.e FDQN) will be used to route traffic from the specified
+          forwarding rule to the environment in Apigee X instance where
+          the proxy is deployed for handling extension traffic.
+          Format: ^([a-zA-Z0-9. _-])+$
+        required: true
+      - name: 'supportedEvents'
+        type: Array
+        description: List of Supported Events.
+        immutable: true
+        item_type:
+          type: Enum
+          enum_values:
+          - 'REQUEST_HEADERS'
+          - 'RESPONSE_HEADERS'
+          - 'REQUEST_BODY'
+          - 'RESPONSE_BODY'
+          - 'REQUEST_TRAILERS'
+          - 'RESPONSE_TRAILERS'
