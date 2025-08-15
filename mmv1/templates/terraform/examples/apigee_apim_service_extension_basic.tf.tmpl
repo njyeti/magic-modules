@@ -1,0 +1,31 @@
+data "google_client_config" "current" {}
+
+resource "google_compute_network" "apigee_network" {
+  name = "apigee-network"
+}
+
+resource "google_apigee_organization" "org" {
+  description         = "Terraform-provisioned basic Apigee Org without VPC Peering."
+  analytics_region    = "us-central1"
+  project_id          = data.google_client_config.current.project
+  disable_vpc_peering = true
+}
+
+resource "google_apigee_apim_service_extension" "apigee_apim_service_extension" {
+  org_id                    = google_apigee_organization.apigee_org.id
+  apim_service_extension_id = "my-service-extension"
+  extension_processor       = "proxy-extension"
+  lb_forwarding_rule        = "projects/project01/global/forwardingRules/test-fr"
+  network                   = "projects/project01/global/networks/default"
+  network_configs {
+    region = "us-west"
+    subnet = "projects/project01/regions/us-west1/subnetworks/default"
+  }
+  extensions {
+      name             = "ext0"
+      match_condition  = "true"
+      fail_open        = true
+      hostname         = "abc.foo.com"
+      supported_events = ["REQUEST_HEADERS","RESPONSE_HEADERS"]
+  }
+}
